@@ -159,11 +159,10 @@ with tab1:
             message_placeholder.markdown("🤔 생각 중...")
             
             try:
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",
-                    messages=[{"role": "user", "content": mcp_prompt}]
-                )
-                
+                response = openai.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": mcp_prompt}])
+
                 full_response = response.choices[0].message.content
                 message_placeholder.markdown(full_response)
             except Exception as e:
