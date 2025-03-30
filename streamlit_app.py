@@ -5,7 +5,7 @@ import openai
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
 
 # OpenAI API 키 설정
-openai.api_key = st.secrets["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"]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # 앱 타이틀
 st.title("당뇨 관리 AI 비서")
