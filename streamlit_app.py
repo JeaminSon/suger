@@ -29,6 +29,12 @@ def query_huggingface(prompt):
             },
             timeout=60
         )
+        return response
+    except Exception as e:
+        print(f"오류 발생: {str(e)}")
+        return None
+
+# try 블록 밖에 있어야 합니다
 st.title("당뇨 관리 AI 비서")
 
 # 사용자 정보 저장 세션 초기화
