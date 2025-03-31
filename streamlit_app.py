@@ -13,26 +13,46 @@ API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
 if not API_KEY and hasattr(st, 'secrets') and "HUGGINGFACE_API_KEY" in st.secrets:
     API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
 headers = {"Authorization": f"Bearer {API_KEY}"}
-
 def query_with_retry(prompt, max_retries=3, delay=2):
     for attempt in range(max_retries):
         try:
             response = requests.post(API_URL, headers=headers, json={"inputs": prompt}, timeout=60)
             if response.status_code == 200:
-                return process_response(response)
+                try:
+                    result = response.json()
+                    # 응답 구조 확인
+                    print("응답 구조:", result)
+                    
+                    # 일반적인 Hugging Face 응답 처리
+                    if isinstance(result, list) and len(result) > 0 and "generated_text" in result[0]:
+                        generated_text = result[0]["generated_text"]
+                        # 생성된 텍스트 표시 또는 처리
+                        print("생성된 텍스트:", generated_text)
+                        return generated_text  # 성공적인 응답 반환
+                    else:
+                        print("예상치 못한 응답 형식:", result)
+                        return f"예상치 못한 응답 형식: {result}"
+                except Exception as e:
+                    print("응답 처리 중 오류:", str(e))
+                    return f"응답 처리 중 오류: {str(e)}"
             elif response.status_code == 503:
                 print(f"서비스 일시 중단 (503). {delay}초 후 재시도 ({attempt+1}/{max_retries})...")
                 time.sleep(delay)
                 delay *= 2  # 지수 백오프
             elif response.status_code == 500:
-                 print(response.text) 
+                print(response.text)
+                if attempt == max_retries - 1:  # 마지막 시도인 경우
+                    return f"서버 내부 오류 (500): {response.text[:100]}..."
+                time.sleep(delay)  # 재시도 전 대기
             else:
                 return f"오류 발생: HTTP {response.status_code}"
         except Exception as e:
             print(f"오류 발생: {str(e)}. 재시도 중...")
+            if attempt == max_retries - 1:  # 마지막 시도인 경우
+                return f"API 호출 중 오류: {str(e)}"
             time.sleep(delay)
+    
     return "최대 재시도 횟수를 초과했습니다. 나중에 다시 시도해주세요."
-
 def query_huggingface(prompt):
     """Hugging Face API 호출 함수"""
     try:
