@@ -24,6 +24,8 @@ def query_with_retry(prompt, max_retries=3, delay=2):
                 print(f"서비스 일시 중단 (503). {delay}초 후 재시도 ({attempt+1}/{max_retries})...")
                 time.sleep(delay)
                 delay *= 2  # 지수 백오프
+            elif respnse.status_code = 500:
+                 print(response.text) 
             else:
                 return f"오류 발생: HTTP {response.status_code}"
         except Exception as e:
