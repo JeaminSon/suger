@@ -1,13 +1,16 @@
 import streamlit as st
 import requests
-
+import os
 # 페이지 설정
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
 
 # Hugging Face API 설정
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 # API 키를 직접 입력 (테스트용, 실제로는 st.secrets 사용 권장)
-API_KEY = "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"  # 실제 API 키로 교체하세요
+API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
+
+if not API_KEY and hasattr(st, 'secrets') and "HUGGINGFACE_API_KEY" in st.secrets:
+    API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
 def query_huggingface(prompt):
