@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import os
+import time
 # 페이지 설정
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
 
@@ -12,6 +13,23 @@ API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "")
 if not API_KEY and hasattr(st, 'secrets') and "HUGGINGFACE_API_KEY" in st.secrets:
     API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
 headers = {"Authorization": f"Bearer {API_KEY}"}
+
+def query_with_retry(prompt, max_retries=3, delay=2):
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(API_URL, headers=headers, json={"inputs": prompt}, timeout=60)
+            if response.status_code == 200:
+                return process_response(response)
+            elif response.status_code == 503:
+                print(f"서비스 일시 중단 (503). {delay}초 후 재시도 ({attempt+1}/{max_retries})...")
+                time.sleep(delay)
+                delay *= 2  # 지수 백오프
+            else:
+                return f"오류 발생: HTTP {response.status_code}"
+        except Exception as e:
+            print(f"오류 발생: {str(e)}. 재시도 중...")
+            time.sleep(delay)
+    return "최대 재시도 횟수를 초과했습니다. 나중에 다시 시도해주세요."
 
 def query_huggingface(prompt):
     """Hugging Face API 호출 함수"""
