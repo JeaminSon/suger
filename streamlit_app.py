@@ -28,7 +28,9 @@ def query_huggingface(prompt):
                 }
             },
             timeout=60
-        )
+        except Exception as e:
+    # 오류 처리
+    print(f"오류 발생: {str(e)}")
 
 # 앱 타이틀
 st.title("당뇨 관리 AI 비서")
