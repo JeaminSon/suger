@@ -13,18 +13,7 @@ if not API_KEY and hasattr(st, 'secrets') and "HUGGINGFACE_API_KEY" in st.secret
     API_KEY = st.secrets["HUGGINGFACE_API_KEY"]
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
-def query_huggingface(prompt):
-    """Hugging Face API 호출 함수"""
-    try:
-        response = requests.post(
-           API_URL, 
-           headers=headers, 
-           json={
-                   "inputs": prompt,
-            }  # json 괄호 닫기
-        )  # 함수 호출 괄호 닫기
 
-# 앱 타이틀
 st.title("당뇨 관리 AI 비서")
 
 # 사용자 정보 저장 세션 초기화
