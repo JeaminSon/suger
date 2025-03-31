@@ -19,23 +19,37 @@ def query_huggingface(prompt):
             json={
                 "inputs": prompt,
                 "parameters": {"max_new_tokens": 512, "temperature": 0.7}
-            }
+            },
+            timeout=30  # 시간 초과 설정 추가
         )
         
-        # 응답 확인
-        if response.status_code == 200:
-            result = response.json()
-            if isinstance(result, list) and len(result) > 0:
-                # 일반적인 응답 형식
-                full_text = result[0]['generated_text']
-                # 입력 프롬프트 제거 (Hugging Face는 입력을 포함해서 반환함)
-                answer = full_text.replace(prompt, "").strip()
-                return answer
-            elif isinstance(result, dict) and 'error' in result:
-                return f"모델 로딩 중 오류: {result['error']}"
+        # 응답 상태 코드 및 내용 로깅
+        st.write(f"API 상태 코드: {response.status_code}")
         
-        # 오류 응답
-        return "응답 처리 중 오류가 발생했습니다. 다시 시도해주세요."
+        # 응답이 JSON 형식인지 확인
+        try:
+            result = response.json()
+            st.write("API 응답:", result)  # 디버깅용 출력
+        except:
+            return f"API 응답이 JSON 형식이 아닙니다: {response.text[:100]}..."
+        
+        # 모델 로딩 중 메시지 처리
+        if isinstance(result, dict) and 'error' in result and 'estimated_time' in result:
+            return f"모델 로딩 중입니다. 잠시 후 다시 시도해주세요. (예상 시간: {result['estimated_time']}초)"
+        
+        # 정상 응답 처리
+        if isinstance(result, list) and len(result) > 0 and 'generated_text' in result[0]:
+            full_text = result[0]['generated_text']
+            # 입력 프롬프트 제거 시도 (실패해도 전체 텍스트 반환)
+            try:
+                # 프롬프트 제거 시도
+                cleaned_response = full_text[len(prompt):].strip()
+                return cleaned_response if cleaned_response else full_text
+            except:
+                return full_text
+        
+        # 기타 응답 형식 처리
+        return f"알 수 없는 응답 형식: {str(result)[:200]}..."
     
     except Exception as e:
         return f"API 호출 중 오류: {str(e)}"
