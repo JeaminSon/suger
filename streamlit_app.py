@@ -21,39 +21,41 @@ def query_huggingface(prompt):
             headers=headers, 
             json={
                 "inputs": prompt,
-                "parameters": {"max_new_tokens": 512, "temperature": 0.7}
+                "parameters": {
+                    "max_new_tokens": 1024,  # 더 많은 토큰을 요청
+                    "temperature": 0.7,
+                    "return_full_text": False  # 입력 프롬프트 제외
+                }
             },
-            timeout=30  # 시간 초과 설정 추가
+            timeout=60  # 시간 초과 설정 증가
         )
         
-        # 응답 상태 코드 및 내용 로깅
-        st.write(f"API 상태 코드: {response.status_code}")
-        
-        # 응답이 JSON 형식인지 확인
-        try:
+        # 응답이 성공적인지 확인
+        if response.status_code == 200:
             result = response.json()
-            st.write("API 응답:", result)  # 디버깅용 출력
-        except:
-            return f"API 응답이 JSON 형식이 아닙니다: {response.text[:100]}..."
+            
+            # 결과가 리스트인 경우
+            if isinstance(result, list) and len(result) > 0:
+                if "generated_text" in result[0]:
+                    text = result[0]["generated_text"]
+                    
+                    # 응답에서 <response> 태그 찾기
+                    if "<response>" in text:
+                        parts = text.split("<response>")
+                        if len(parts) > 1:
+                            # </response>로 끝나는 경우 처리
+                            response_text = parts[1].split("</response>")[0] if "</response>" in parts[1] else parts[1]
+                            return response_text.strip()
+                    
+                    # 응답에 <response> 태그가 없는 경우 전체 텍스트 반환
+                    return text.strip()
+            
+            # 다른 형식의 응답 처리
+            return f"응답을 처리하지 못했습니다. 다른 질문을 시도해 보세요."
         
-        # 모델 로딩 중 메시지 처리
-        if isinstance(result, dict) and 'error' in result and 'estimated_time' in result:
-            return f"모델 로딩 중입니다. 잠시 후 다시 시도해주세요. (예상 시간: {result['estimated_time']}초)"
-        
-        # 정상 응답 처리
-        if isinstance(result, list) and len(result) > 0 and 'generated_text' in result[0]:
-            full_text = result[0]['generated_text']
-            # 입력 프롬프트 제거 시도 (실패해도 전체 텍스트 반환)
-            try:
-                # 프롬프트 제거 시도
-                cleaned_response = full_text[len(prompt):].strip()
-                return cleaned_response if cleaned_response else full_text
-            except:
-                return full_text
-        
-        # 기타 응답 형식 처리
-        return f"알 수 없는 응답 형식: {str(result)[:200]}..."
-    
+        else:
+            return f"API 오류 (코드 {response.status_code}): {response.text}"
+            
     except Exception as e:
         return f"API 호출 중 오류: {str(e)}"
 
@@ -173,13 +175,14 @@ with tab1:
         special_notes = st.session_state.user_info["special_notes"] if st.session_state.user_info["special_notes"] else "특이사항 없음"
         
         # MCP 프롬프트 구성
+        # MCP 프롬프트 구성
         mcp_prompt = f"""
         <system>
         당신은 당뇨 환자를 위한 개인 건강 관리 비서입니다. 친절하고 이해하기 쉬운 말로 의학적으로 정확한 조언을 제공하세요.
         환자가 위험한 상황에 처했다고 판단되면 즉시 의사와 상담하라고 권고하세요.
         고혈당 및 저혈당 증상, 약물 정보, 식이요법, 운동 등에 관한 전문적인 지식을 바탕으로 응답하세요.
         </system>
-        
+
         <user_profile>
         이름: {st.session_state.user_info["name"] if st.session_state.user_info["name"] else "사용자"}
         나이: {st.session_state.user_info["age"]}세
@@ -201,6 +204,8 @@ with tab1:
         <query>
         {prompt}
         </query>
+        
+        <response>
         """
         
         # AI 응답 생성
