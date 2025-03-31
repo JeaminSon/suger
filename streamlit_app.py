@@ -4,12 +4,41 @@ import requests
 # 페이지 설정
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
 
+# Hugging Face API 설정
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
+# API 키를 직접 입력 (테스트용, 실제로는 st.secrets 사용 권장)
+API_KEY = "hf_your_api_key_here"  # 실제 API 키로 교체하세요
+headers = {"Authorization": f"Bearer {API_KEY}"}
 
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
+def query_huggingface(prompt):
+    """Hugging Face API 호출 함수"""
+    try:
+        response = requests.post(
+            API_URL, 
+            headers=headers, 
+            json={
+                "inputs": prompt,
+                "parameters": {"max_new_tokens": 512, "temperature": 0.7}
+            }
+        )
+        
+        # 응답 확인
+        if response.status_code == 200:
+            result = response.json()
+            if isinstance(result, list) and len(result) > 0:
+                # 일반적인 응답 형식
+                full_text = result[0]['generated_text']
+                # 입력 프롬프트 제거 (Hugging Face는 입력을 포함해서 반환함)
+                answer = full_text.replace(prompt, "").strip()
+                return answer
+            elif isinstance(result, dict) and 'error' in result:
+                return f"모델 로딩 중 오류: {result['error']}"
+        
+        # 오류 응답
+        return "응답 처리 중 오류가 발생했습니다. 다시 시도해주세요."
+    
+    except Exception as e:
+        return f"API 호출 중 오류: {str(e)}"
 
 # 앱 타이틀
 st.title("당뇨 관리 AI 비서")
@@ -158,31 +187,13 @@ with tab1:
         """
         
         # AI 응답 생성
-with st.chat_message("assistant"):
-    message_placeholder = st.empty()
-    message_placeholder.markdown("🤔 생각 중...")
-    
-    try:
-        # Hugging Face API 호출
-        output = query({
-            "inputs": mcp_prompt,
-            "parameters": {"max_new_tokens": 512, "temperature": 0.7}
-        })
-        
-        # 응답 처리
-        if isinstance(output, dict) and 'error' in output:
-            full_response = f"모델 로딩 중 오류: {output['error']}"
-        else:
-            # 일반적인 응답 형식 처리
-            full_response = output[0]['generated_text']
-            # 입력 프롬프트 부분 제거
-            full_response = full_response.replace(mcp_prompt, "").strip()
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            message_placeholder.markdown("🤔 생각 중...")
             
-        message_placeholder.markdown(full_response)
-    except Exception as e:
-        full_response = "죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-        message_placeholder.markdown(full_response)
-        st.error(f"오류 발생: {str(e)}")
-    
-    # 응답 저장
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+            # API 호출 및 응답 처리
+            response = query_huggingface(mcp_prompt)
+            message_placeholder.markdown(response)
+            
+            # 응답 저장
+            st.session_state.messages.append({"role": "assistant", "content": response})
