@@ -4,7 +4,6 @@ import os
 import time
 # 페이지 설정
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
-print(response.json())
 # Hugging Face API 설정
 API_URL = "https://api-inference.huggingface.co/models/gpt2"
 # API 키를 직접 입력 (테스트용, 실제로는 st.secrets 사용 권장)
