@@ -160,7 +160,7 @@ with tab1:
             
             try:
                 response = openai.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": mcp_prompt}])
 
                 full_response = response.choices[0].message.content
