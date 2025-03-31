@@ -22,7 +22,7 @@ def query_with_retry(prompt, max_retries=3, delay=2):
                     # 응답 구조 확인
                     print("응답 구조:", result)
                     
-                    # 일반적인 Hugging Face 응답 처리
+                    # 응답에서 생성된 텍스트 추출
                     if isinstance(result, list) and len(result) > 0 and "generated_text" in result[0]:
                         generated_text = result[0]["generated_text"]
                         # 생성된 텍스트 표시 또는 처리
@@ -50,6 +50,8 @@ def query_with_retry(prompt, max_retries=3, delay=2):
             if attempt == max_retries - 1:  # 마지막 시도인 경우
                 return f"API 호출 중 오류: {str(e)}"
             time.sleep(delay)
+    
+    return "최대 재시도 횟수를 초과했습니다. 나중에 다시 시도해주세요."
     
     return "최대 재시도 횟수를 초과했습니다. 나중에 다시 시도해주세요."
 def query_huggingface(prompt):
