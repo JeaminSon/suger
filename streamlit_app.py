@@ -1,11 +1,15 @@
 import streamlit as st
-import openai
+import requests
 
 # 페이지 설정
 st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layout="wide")
 
-# OpenAI API 키 설정
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
+
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.json()
 
 # 앱 타이틀
 st.title("당뇨 관리 AI 비서")
@@ -159,11 +163,6 @@ with tab1:
             message_placeholder.markdown("🤔 생각 중...")
             
             try:
-                response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": mcp_prompt}])
-
-                full_response = response.choices[0].message.content
                 message_placeholder.markdown(full_response)
             except Exception as e:
                 full_response = "죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
