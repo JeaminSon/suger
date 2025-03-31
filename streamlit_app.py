@@ -7,7 +7,7 @@ st.set_page_config(page_title="당뇨 관리 AI 비서", page_icon="💊", layou
 # Hugging Face API 설정
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 # API 키를 직접 입력 (테스트용, 실제로는 st.secrets 사용 권장)
-API_KEY = "hf_your_api_key_here"  # 실제 API 키로 교체하세요
+API_KEY = "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"  # 실제 API 키로 교체하세요
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
 def query_huggingface(prompt):
