@@ -168,17 +168,17 @@ with tab1:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # 사용자 입력 처리
-    if prompt := st.chat_input("질문을 입력하세요..."):
-        # 사용자 메시지 추가 및 표시
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+# 사용자 입력 처리 부분에서
+if prompt := st.chat_input("질문을 입력하세요..."):
+    # 사용자 메시지 추가 및 표시
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
         
         # 약물 목록 처리
-        medications_list = []
-        if st.session_state.user_info["medications"]:
-            medications_list = [med for med in st.session_state.user_info["medications"].split("\n") if med.strip()]
+    medications_list = []
+    if st.session_state.user_info["medications"]:
+        medications_list = [med for med in st.session_state.user_info["medications"].split("\n") if med.strip()]
         
         # 특이사항 처리
         special_notes = st.session_state.user_info["special_notes"] if st.session_state.user_info["special_notes"] else "특이사항 없음"
@@ -218,13 +218,15 @@ with tab1:
         """
         
         # AI 응답 생성
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown("🤔 생각 중...")
-            
-            # API 호출 및 응답 처리
-            response = query_huggingface(mcp_prompt)
-            message_placeholder.markdown(response)
-            
-            # 응답 저장
-            st.session_state.messages.append({"role": "assistant", "content": response})
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        message_placeholder.markdown("🤔 생각 중...")
+        
+        # API 호출 및 응답 처리
+        response_text = query_with_retry(mcp_prompt)  # 여기서 query_with_retry 함수 호출
+        
+        # 응답 표시
+        message_placeholder.markdown(response_text)
+        
+        # 응답 저장
+        st.session_state.messages.append({"role": "assistant", "content": response_text})
