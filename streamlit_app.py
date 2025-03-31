@@ -37,17 +37,10 @@ def query_huggingface(prompt):
     """Hugging Face API 호출 함수"""
     try:
         response = requests.post(
-            API_URL, 
-            headers=headers, 
-            json={
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 1024,  # 더 많은 토큰을 요청
-                    "temperature": 0.7
-                    # return_full_text 매개변수 제거
-                }
-            },
-            timeout=60
+           API_URL,
+           headers=headers,
+           json={"inputs": prompt},  # 가장 기본적인 형태로 단순화
+           timeout=60
         )
         return response
     except Exception as e:
