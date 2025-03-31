@@ -168,56 +168,55 @@ with tab1:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 사용자 입력 처리 부분에서
+# 사용자 입력 처리 부분
 if prompt := st.chat_input("질문을 입력하세요..."):
     # 사용자 메시지 추가 및 표시
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-        
-        # 약물 목록 처리
+    
+    # 약물 목록 처리
     medications_list = []
     if st.session_state.user_info["medications"]:
         medications_list = [med for med in st.session_state.user_info["medications"].split("\n") if med.strip()]
-        
-        # 특이사항 처리
-        special_notes = st.session_state.user_info["special_notes"] if st.session_state.user_info["special_notes"] else "특이사항 없음"
-        
-        # MCP 프롬프트 구성
-        # MCP 프롬프트 구성
-        mcp_prompt = f"""
-        <system>
-        당신은 당뇨 환자를 위한 개인 건강 관리 비서입니다. 친절하고 이해하기 쉬운 말로 의학적으로 정확한 조언을 제공하세요.
-        환자가 위험한 상황에 처했다고 판단되면 즉시 의사와 상담하라고 권고하세요.
-        고혈당 및 저혈당 증상, 약물 정보, 식이요법, 운동 등에 관한 전문적인 지식을 바탕으로 응답하세요.
-        </system>
+    
+    # 특이사항 처리
+    special_notes = st.session_state.user_info["special_notes"] if st.session_state.user_info["special_notes"] else "특이사항 없음"
+    
+    # MCP 프롬프트 구성
+    mcp_prompt = f"""
+    <system>
+    당신은 당뇨 환자를 위한 개인 건강 관리 비서입니다. 친절하고 이해하기 쉬운 말로 의학적으로 정확한 조언을 제공하세요.
+    환자가 위험한 상황에 처했다고 판단되면 즉시 의사와 상담하라고 권고하세요.
+    고혈당 및 저혈당 증상, 약물 정보, 식이요법, 운동 등에 관한 전문적인 지식을 바탕으로 응답하세요.
+    </system>
 
-        <user_profile>
-        이름: {st.session_state.user_info["name"] if st.session_state.user_info["name"] else "사용자"}
-        나이: {st.session_state.user_info["age"]}세
-        성별: {st.session_state.user_info.get("gender", "미지정")}
-        키: {st.session_state.user_info["height"]}cm
-        체중: {st.session_state.user_info["weight"]}kg
-        당뇨 유형: {st.session_state.user_info["diabetes_type"]}
-        진단 시기: {st.session_state.user_info["diagnosis_year"]}년
-        최근 혈당 수치: {st.session_state.user_info["recent_glucose"]} mg/dL
-        목표 혈당 범위: {st.session_state.user_info["target_glucose"]} mg/dL
-        현재 약물: {', '.join(medications_list) if medications_list else "없음"}
-        특이사항: {special_notes}
-        </user_profile>
-        
-        <chat_history>
-        {chr(10).join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[:-1]])}
-        </chat_history>
-        
-        <query>
-        {prompt}
-        </query>
-        
-        <response>
-        """
-        
-        # AI 응답 생성
+    <user_profile>
+    이름: {st.session_state.user_info["name"] if st.session_state.user_info["name"] else "사용자"}
+    나이: {st.session_state.user_info["age"]}세
+    성별: {st.session_state.user_info.get("gender", "미지정")}
+    키: {st.session_state.user_info["height"]}cm
+    체중: {st.session_state.user_info["weight"]}kg
+    당뇨 유형: {st.session_state.user_info["diabetes_type"]}
+    진단 시기: {st.session_state.user_info["diagnosis_year"]}년
+    최근 혈당 수치: {st.session_state.user_info["recent_glucose"]} mg/dL
+    목표 혈당 범위: {st.session_state.user_info["target_glucose"]} mg/dL
+    현재 약물: {', '.join(medications_list) if medications_list else "없음"}
+    특이사항: {special_notes}
+    </user_profile>
+    
+    <chat_history>
+    {chr(10).join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[:-1]])}
+    </chat_history>
+    
+    <query>
+    {prompt}
+    </query>
+    
+    <response>
+    """
+    
+    # AI 응답 생성
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         message_placeholder.markdown("🤔 생각 중...")
