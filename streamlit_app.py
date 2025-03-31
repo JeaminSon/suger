@@ -23,41 +23,12 @@ def query_huggingface(prompt):
                 "inputs": prompt,
                 "parameters": {
                     "max_new_tokens": 1024,  # 더 많은 토큰을 요청
-                    "temperature": 0.7,
-                    "return_full_text": False  # 입력 프롬프트 제외
+                    "temperature": 0.7
+                    # return_full_text 매개변수 제거
                 }
             },
-            timeout=60  # 시간 초과 설정 증가
+            timeout=60
         )
-        
-        # 응답이 성공적인지 확인
-        if response.status_code == 200:
-            result = response.json()
-            
-            # 결과가 리스트인 경우
-            if isinstance(result, list) and len(result) > 0:
-                if "generated_text" in result[0]:
-                    text = result[0]["generated_text"]
-                    
-                    # 응답에서 <response> 태그 찾기
-                    if "<response>" in text:
-                        parts = text.split("<response>")
-                        if len(parts) > 1:
-                            # </response>로 끝나는 경우 처리
-                            response_text = parts[1].split("</response>")[0] if "</response>" in parts[1] else parts[1]
-                            return response_text.strip()
-                    
-                    # 응답에 <response> 태그가 없는 경우 전체 텍스트 반환
-                    return text.strip()
-            
-            # 다른 형식의 응답 처리
-            return f"응답을 처리하지 못했습니다. 다른 질문을 시도해 보세요."
-        
-        else:
-            return f"API 오류 (코드 {response.status_code}): {response.text}"
-            
-    except Exception as e:
-        return f"API 호출 중 오류: {str(e)}"
 
 # 앱 타이틀
 st.title("당뇨 관리 AI 비서")
