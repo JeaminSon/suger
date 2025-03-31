@@ -183,6 +183,6 @@ with st.chat_message("assistant"):
         full_response = "죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
         message_placeholder.markdown(full_response)
         st.error(f"오류 발생: {str(e)}")
-        
-        # 응답 저장
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+    
+    # 응답 저장
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
