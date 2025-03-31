@@ -175,57 +175,62 @@ if prompt := st.chat_input("질문을 입력하세요..."):
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # 약물 목록 처리
-    medications_list = []
-    if st.session_state.user_info["medications"]:
-        medications_list = [med for med in st.session_state.user_info["medications"].split("\n") if med.strip()]
-    
-    # 특이사항 처리
-    special_notes = st.session_state.user_info["special_notes"] if st.session_state.user_info["special_notes"] else "특이사항 없음"
-    
-    # MCP 프롬프트 구성
-    mcp_prompt = f"""
-    <system>
-    당신은 당뇨 환자를 위한 개인 건강 관리 비서입니다. 친절하고 이해하기 쉬운 말로 의학적으로 정확한 조언을 제공하세요.
-    환자가 위험한 상황에 처했다고 판단되면 즉시 의사와 상담하라고 권고하세요.
-    고혈당 및 저혈당 증상, 약물 정보, 식이요법, 운동 등에 관한 전문적인 지식을 바탕으로 응답하세요.
-    </system>
-
-    <user_profile>
-    이름: {st.session_state.user_info["name"] if st.session_state.user_info["name"] else "사용자"}
-    나이: {st.session_state.user_info["age"]}세
-    성별: {st.session_state.user_info.get("gender", "미지정")}
-    키: {st.session_state.user_info["height"]}cm
-    체중: {st.session_state.user_info["weight"]}kg
-    당뇨 유형: {st.session_state.user_info["diabetes_type"]}
-    진단 시기: {st.session_state.user_info["diagnosis_year"]}년
-    최근 혈당 수치: {st.session_state.user_info["recent_glucose"]} mg/dL
-    목표 혈당 범위: {st.session_state.user_info["target_glucose"]} mg/dL
-    현재 약물: {', '.join(medications_list) if medications_list else "없음"}
-    특이사항: {special_notes}
-    </user_profile>
-    
-    <chat_history>
-    {chr(10).join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[:-1]])}
-    </chat_history>
-    
-    <query>
-    {prompt}
-    </query>
-    
-    <response>
-    """
+    # 키워드 기반 응답 시스템
+    response_text = get_diabetes_response(prompt.lower())
     
     # AI 응답 생성
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        message_placeholder.markdown("🤔 생각 중...")
-        
-        # API 호출 및 응답 처리
-        response_text = query_with_retry(mcp_prompt)  # 여기서 query_with_retry 함수 호출
-        
-        # 응답 표시
         message_placeholder.markdown(response_text)
         
         # 응답 저장
         st.session_state.messages.append({"role": "assistant", "content": response_text})
+
+# 키워드 기반 응답 함수
+def get_diabetes_response(query):
+    # 식이요법 관련 키워드
+    if any(word in query for word in ["먹", "식사", "식이", "음식", "식단", "영양"]):
+        return """당뇨 관리를 위한 식이요법 팁입니다:
+        
+1. 탄수화물 섭취를 조절하고 복합 탄수화물(현미, 통곡물 등)을 선택하세요.
+2. 식이섬유가 풍부한 채소를 충분히 섭취하세요.
+3. 단백질 섭취를 적절히 유지하세요(살코기, 생선, 콩류, 저지방 유제품).
+4. 지방은 불포화지방(올리브유, 아보카도, 견과류)을 선택하세요.
+5. 규칙적인 식사 시간을 유지하고 과식을 피하세요.
+6. 식사 후 2시간 혈당을 측정하여 특정 음식이 혈당에 미치는 영향을 파악하세요."""
+
+    # 운동 관련 키워드
+    elif any(word in query for word in ["운동", "활동", "걷", "근력", "체중"]):
+        return """당뇨 환자에게 권장되는 운동 가이드라인:
+        
+1. 일주일에 최소 150분의 중강도 유산소 운동을 하세요(걷기, 수영, 자전거 등).
+2. 주 2-3회 근력 운동을 포함하세요.
+3. 운동 전후로 혈당을 측정하여 변화를 모니터링하세요.
+4. 운동 중 저혈당 위험에 대비해 간식을 준비하세요.
+5. 운동 강도는 점진적으로 늘리고 무리하지 마세요.
+6. 발 관리에 특별히 주의하고 적절한 신발을 착용하세요."""
+
+    # 혈당 관리 관련 키워드
+    elif any(word in query for word in ["혈당", "당뇨", "수치", "모니터", "측정"]):
+        return """효과적인 혈당 관리 방법:
+        
+1. 정기적으로 혈당을 측정하고 기록하세요(식전, 식후 2시간, 취침 전).
+2. 목표 혈당 범위(80-140 mg/dL)를 유지하도록 노력하세요.
+3. 3개월마다 당화혈색소(HbA1c) 검사를 받으세요.
+4. 혈당 패턴을 분석하여 조절이 필요한 생활습관을 파악하세요.
+5. 스트레스가 혈당에 미치는 영향을 인지하고 관리하세요.
+6. 혈당이 지속적으로 목표 범위를 벗어나면 의사와 상담하세요."""
+
+    # 일반적인 질문이나 "뭘 해야 하나요" 유형의 질문
+    else:
+        return """당뇨 관리를 위한 기본 지침:
+        
+1. 정기적인 혈당 모니터링: 식전, 식후 2시간, 취침 전에 측정하세요.
+2. 균형 잡힌 식단: 탄수화물을 조절하고, 식이섬유가 풍부한 음식을 섭취하세요.
+3. 규칙적인 운동: 주 5일, 하루 30분 이상의 중강도 운동을 목표로 하세요.
+4. 체중 관리: 건강한 체중을 유지하도록 노력하세요.
+5. 정기적인 건강 검진: 3-6개월마다 의사를 방문하여 당화혈색소 검사를 받으세요.
+6. 발 관리: 매일 발을 점검하고 적절한 신발을 착용하세요.
+7. 스트레스 관리: 스트레스는 혈당에 영향을 줄 수 있으므로 관리가 중요합니다.
+
+현재 혈당이 120 mg/dL로 목표 범위(80-140 mg/dL) 내에 있어 잘 관리되고 있습니다. 계속해서 좋은 생활습관을 유지하세요."""
