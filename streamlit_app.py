@@ -158,16 +158,31 @@ with tab1:
         """
         
         # AI 응답 생성
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown("🤔 생각 중...")
+with st.chat_message("assistant"):
+    message_placeholder = st.empty()
+    message_placeholder.markdown("🤔 생각 중...")
+    
+    try:
+        # Hugging Face API 호출
+        output = query({
+            "inputs": mcp_prompt,
+            "parameters": {"max_new_tokens": 512, "temperature": 0.7}
+        })
+        
+        # 응답 처리
+        if isinstance(output, dict) and 'error' in output:
+            full_response = f"모델 로딩 중 오류: {output['error']}"
+        else:
+            # 일반적인 응답 형식 처리
+            full_response = output[0]['generated_text']
+            # 입력 프롬프트 부분 제거
+            full_response = full_response.replace(mcp_prompt, "").strip()
             
-            try:
-                message_placeholder.markdown(full_response)
-            except Exception as e:
-                full_response = "죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-                message_placeholder.markdown(full_response)
-                st.error(f"오류 발생: {str(e)}")
+        message_placeholder.markdown(full_response)
+    except Exception as e:
+        full_response = "죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+        message_placeholder.markdown(full_response)
+        st.error(f"오류 발생: {str(e)}")
         
         # 응답 저장
         st.session_state.messages.append({"role": "assistant", "content": full_response})
